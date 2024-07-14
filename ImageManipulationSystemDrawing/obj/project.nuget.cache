@@ -1,0 +1,11 @@
+{
+  "version": 2,
+  "dgSpecHash": "cfMrpkrpRPl31qt/kCfJ82QitVu5HO6GXPeje8lmrNR+FbGKPT+/Vl7GDtAQMMDpiLN+haPhHeHoXbXgo9bdUw==",
+  "success": true,
+  "projectFilePath": "C:\\Users\\wmpoo\\OneDrive\\Programs\\ImageManipulationSystemDrawing\\ImageManipulationSystemDrawing\\ImageManipulationSystemDrawing.csproj",
+  "expectedPackageFiles": [
+    "C:\\Users\\wmpoo\\.nuget\\packages\\microsoft.win32.systemevents\\8.0.0\\microsoft.win32.systemevents.8.0.0.nupkg.sha512",
+    "C:\\Users\\wmpoo\\.nuget\\packages\\system.drawing.common\\8.0.7\\system.drawing.common.8.0.7.nupkg.sha512"
+  ],
+  "logs": []
+}
