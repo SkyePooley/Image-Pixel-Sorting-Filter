@@ -77,12 +77,8 @@ namespace ImageManipulationSystemDrawing
             }
         }
 
-        public void ContrastSort(float threshold)
+        public void SortAll()
         {
-            ImageProcessor subProcessor = new ImageProcessor(this.Image);
-            subProcessor.ContrastMask(threshold);
-            Bitmap contrastMask = subProcessor.Image;
-
             for (int row = 0; row < Image.Height; row++)
             {
                 SortRow(Image, row);
@@ -101,6 +97,61 @@ namespace ImageManipulationSystemDrawing
             {
                 image.SetPixel(col, rowIndex, rowPixels[col]);
             }
+        }
+
+        public void ContrastSort(float threshold)
+        {
+            // Generate a contrast mask of the image for span generation.
+            Console.WriteLine("Generating Contrast Mask");
+            ImageProcessor subProcessor = new ImageProcessor(this.Image);
+            subProcessor.ContrastMask(threshold);
+            Bitmap contrastMask = subProcessor.Image;
+            
+            // Find all the contiguous areas of white in the contrast mask.
+            // Place the corresponding image pixels into a span object.
+            Console.WriteLine("Generating spans");
+            List<Span> spans = new List<Span>();
+            int y = 0;
+            while (y < Image.Height)
+            {
+                int x = 0;
+                while (x < Image.Width)
+                {
+                    if (contrastMask.GetPixel(x, y).GetBrightness().Equals(1))
+                    {
+                        Span newSpan = new Span((x, y), Image.GetPixel(x, y));
+                        x++;
+                        while (x < Image.Width && contrastMask.GetPixel(x, y).GetBrightness() != 0)
+                        {
+                            newSpan.AddPixel(Image.GetPixel(x, y));
+                            x++;
+                        }
+                        spans.Add(newSpan);
+                    }
+
+                    x++;
+                }
+
+                y++;
+            }
+            
+            // Sort the spans that were generated and place them back into the image.
+            Console.WriteLine("spans " + spans.Count);
+            Console.WriteLine("Sorting Spans");
+            foreach (Span span in spans)
+            {
+                // span.HueSort();
+                // span.SaturationSort();
+                span.LuminanceSort();
+                (int x, int y) position = span.StartPosition;
+                foreach (Color pixel in span.Pixels)
+                {
+                    Image.SetPixel(position.x, position.y, pixel);
+                    position.x++;
+                }
+            }
+
+            Console.WriteLine("Sort Complete");
         }
     }
 }

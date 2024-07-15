@@ -4,14 +4,18 @@ namespace ImageManipulationSystemDrawing;
 
 public class Span
 {
-    private (int x, int y) StartPosition { get; }
-    private List<Color> Pixels { get; }
+    internal (int x, int y) StartPosition { get; }
+    internal List<Color> Pixels { get; }
 
-    public Span((int x, int y) startPosition, List<Color> pixels)
+    public Span((int x, int y) startPosition, Color startPixel)
     {
         StartPosition = startPosition;
-        Pixels = pixels;
-        Pixels.TrimExcess();
+        Pixels = new List<Color> { startPixel };
+    }
+
+    public void AddPixel(Color pixel)
+    {
+        Pixels.Add(pixel);
     }
 
     public void LuminanceSort()

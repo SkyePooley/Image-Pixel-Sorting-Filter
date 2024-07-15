@@ -9,10 +9,11 @@ namespace ImageManipulationSystemDrawing
         {
             try
             {
-                var processor = new ImageProcessor(@"C:\Users\wmpoo\OneDrive\Programs\ImageManipulationSystemDrawing\ImageManipulationSystemDrawing\Properties\demo.jpg");
+                var processor = new ImageProcessor(@"C:\Users\wmpoo\OneDrive\Programs\ImageManipulationSystemDrawing\ImageManipulationSystemDrawing\Properties\demoSmall.png");
                 // processor.ContrastMask(0.4f);
-                processor.ContrastSort(0.5f);
-                processor.SaveTo(@"C:\Users\wmpoo\OneDrive\Programs\ImageManipulationSystemDrawing\ImageManipulationSystemDrawing\output.jpg");
+                // processor.SortAll();
+                processor.ContrastSort(0.3f);
+                processor.SaveTo(@"C:\Users\wmpoo\OneDrive\Programs\ImageManipulationSystemDrawing\ImageManipulationSystemDrawing\output.png");
             }
             catch (Exception ex) 
             {
