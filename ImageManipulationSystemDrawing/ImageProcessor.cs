@@ -1,14 +1,16 @@
 ﻿using System;
+using System.Collections.Concurrent;
 using System.Collections.Generic;
+using System.Diagnostics;
 using System.Drawing;
 using System.Threading.Tasks;
 
 
 namespace ImageManipulationSystemDrawing
 {
-    internal class ImageProcessor
+    public class ImageProcessor
     {
-        private Bitmap Image { get; }
+        private Bitmap _image;
         public enum SortingKey {
             Hue,
             Saturation,
@@ -21,9 +23,9 @@ namespace ImageManipulationSystemDrawing
         /// <param name="path">Path to the image on file.</param>
         public ImageProcessor(string path)
         {
-            Image = new Bitmap(path);
-            Console.WriteLine("Width: " + Image.Width);
-            Console.WriteLine("Height: " + Image.Height);
+            _image = new Bitmap(path);
+            Console.WriteLine("Width: " + _image.Width);
+            Console.WriteLine("Height: " + _image.Height);
         }
 
         /// <summary>
@@ -32,7 +34,7 @@ namespace ImageManipulationSystemDrawing
         /// <param name="image">System.Drawing.Bitmap object containing a preloaded image.</param>
         public ImageProcessor(Bitmap image)
         {
-            this.Image = (Bitmap) image.Clone();
+            this._image = (Bitmap) image.Clone();
         }
 
         /// <summary>
@@ -41,7 +43,7 @@ namespace ImageManipulationSystemDrawing
         /// <param name="path">Save location for resulting image.</param>
         public void SaveTo(string path)
         {
-            Image.Save(path);
+            _image.Save(path);
         }
         
         /// <summary>
@@ -52,15 +54,18 @@ namespace ImageManipulationSystemDrawing
         /// <param name="threshold">Brightness threshold for contrast mask. Must be between 0.0 (black) and 1.0 (white)</param>
         public void ContrastMask(float threshold)
         {
-            for (int row = 0; row < Image.Height; row++)
+            Stopwatch timer = Stopwatch.StartNew();
+            for (int row = 0; row < _image.Height; row++)
             {
-                for (int col = 0; col < Image.Width; col++)
+                for (int col = 0; col < _image.Width; col++)
                 {
-                    Color pixel = Image.GetPixel(col, row);
+                    Color pixel = _image.GetPixel(col, row);
                     Color newPixel = this.ContrastMask(pixel, threshold);
-                    Image.SetPixel(col, row, newPixel);
+                    _image.SetPixel(col, row, newPixel);
                 }
             }
+            timer.Stop();
+            Console.WriteLine($"Contrast mask done in {timer.ElapsedMilliseconds}ms");
         }
         
         private Color ContrastMask(Color pixel, float threshold)
@@ -81,85 +86,79 @@ namespace ImageManipulationSystemDrawing
         /// </summary>
         public void SortAll()
         {
-            for (int row = 0; row < Image.Height; row++)
+            for (int row = 0; row < _image.Height; row++)
             {
-                SortRow(Image, row);
+                SortRow(_image, row);
             }
         }
 
         private void SortRow(Bitmap image, int rowIndex)
         {
             List<Color> rowPixels = new List<Color>(image.Width);
-            for (int col = 0; col < Image.Width; col++)
+            for (int col = 0; col < _image.Width; col++)
             {
-                rowPixels.Add(Image.GetPixel(col, rowIndex));
+                rowPixels.Add(_image.GetPixel(col, rowIndex));
             }
             rowPixels.Sort((x, y) => x.GetBrightness().CompareTo(y.GetBrightness()));
-            for (int col = 0; col < Image.Width; col++)
+            for (int col = 0; col < _image.Width; col++)
             {
                 image.SetPixel(col, rowIndex, rowPixels[col]);
             }
         }
 
+        /// <summary>
+        /// An image filter which sorts rows of pixels meeting the given brightness threshold.
+        /// </summary>
+        /// <param name="threshold">Brightness threshold for pixel to be included in sorted span. Range 0.0 -> 1.0 where 1.0 is white.</param>
+        /// <param name="sortBy">Colour attribute to sort pixels by, either Hue, Saturation, or Luminance</param>
         public void ContrastSort(float threshold, SortingKey sortBy)
         {
+            Console.WriteLine("Creating Contrast Mask");
             // Generate a contrast mask of the image for span generation.
-            Console.WriteLine("Generating Contrast Mask");
-            ImageProcessor subProcessor = new ImageProcessor(this.Image);
+            ImageProcessor subProcessor = new ImageProcessor(this._image);
             subProcessor.ContrastMask(threshold);
-            Bitmap contrastMask = subProcessor.Image;
+            Bitmap contrastMask = subProcessor._image;
+
+            Stopwatch timer = Stopwatch.StartNew();
             
-            // Find all the contiguous areas of white in the contrast mask.
-            // Place the corresponding image pixels into a span object.
-            Console.WriteLine("Generating spans");
-            List<Span> spans = new List<Span>();
+            // Create a thread to sort spans as they are created.
+            ConcurrentQueue<SortingTask> spansToSort = new ConcurrentQueue<SortingTask>();
+            SpanSorter spanSorter = new SpanSorter(_image, spansToSort);
+            Thread spanSorterThread = new Thread(spanSorter.SortSpans);
+            spanSorterThread.Start();
+
+            // Search the image for contiguous lines of pixels whose corresponding contrast mask pixel is white
             int y = 0;
-            while (y < Image.Height)
+            while (y < _image.Height)
             {
                 int x = 0;
-                while (x < Image.Width)
+                while (x < _image.Width)
                 {
                     if (contrastMask.GetPixel(x, y).GetBrightness().Equals(1))
                     {
-                        Span newSpan = new Span((x, y), Image.GetPixel(x, y));
+                        Span newSpan = new Span((x, y), _image.GetPixel(x, y));
                         x++;
-                        while (x < Image.Width && contrastMask.GetPixel(x, y).GetBrightness() != 0)
+                        // Move along the row until the end of the span is found
+                        while (x < _image.Width && contrastMask.GetPixel(x, y).GetBrightness() != 0)
                         {
-                            newSpan.AddPixel(Image.GetPixel(x, y));
+                            newSpan.AddPixel(_image.GetPixel(x, y));
                             x++;
                         }
-                        spans.Add(newSpan);
+                        // Send the span to be sorted
+                        spansToSort.Enqueue(new SortingTask(newSpan, sortBy));
                     }
-
                     x++;
                 }
-
                 y++;
             }
+            Console.WriteLine("Done finding spans");
             
-            // Sort the spans that were generated and place them back into the image.
-            Console.WriteLine("spans " + spans.Count);
-            Console.WriteLine("Sorting Spans");
-            foreach (Span span in spans)
-            {
-                // Sort based on caller determined attribute
-                switch (sortBy)
-                {
-                    case SortingKey.Hue: span.HueSort(); break;
-                    case SortingKey.Saturation: span.SaturationSort(); break;
-                    case SortingKey.Luminance: span.LuminanceSort(); break;
-                }
-
-                //Place sorted pixels back into the image
-                (int x, int y) position = span.StartPosition;
-                foreach (Color pixel in span.Pixels)
-                {
-                    Image.SetPixel(position.x, position.y, pixel);
-                    position.x++;
-                }
-            }
-
-            Console.WriteLine("Sort Complete");
+            // Wait until the span sorter has finished, then terminate it.
+            while (!spansToSort.IsEmpty) ;
+            spanSorter.cancel = true;
+            _image = spanSorter.LocalImage;
+            timer.Stop();
+            Console.WriteLine($"Sort complete in {timer.ElapsedMilliseconds}ms");
         }
     }
 }
