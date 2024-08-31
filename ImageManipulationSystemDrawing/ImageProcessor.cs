@@ -11,6 +11,7 @@ namespace ImageManipulationSystemDrawing
     public class ImageProcessor
     {
         private Bitmap _image;
+        private RawBitmap _rawBitmap;
         public enum SortingKey {
             Hue,
             Saturation,
@@ -24,6 +25,7 @@ namespace ImageManipulationSystemDrawing
         public ImageProcessor(string path)
         {
             _image = new Bitmap(path);
+            _rawBitmap = new RawBitmap(_image);
             Console.WriteLine("Width: " + _image.Width);
             Console.WriteLine("Height: " + _image.Height);
         }
@@ -34,7 +36,8 @@ namespace ImageManipulationSystemDrawing
         /// <param name="image">System.Drawing.Bitmap object containing a preloaded image.</param>
         public ImageProcessor(Bitmap image)
         {
-            this._image = (Bitmap) image.Clone();
+            _image = (Bitmap) image.Clone();
+            _rawBitmap = new RawBitmap(_image);
         }
 
         /// <summary>
@@ -59,25 +62,27 @@ namespace ImageManipulationSystemDrawing
             {
                 for (int col = 0; col < _image.Width; col++)
                 {
-                    Color pixel = _image.GetPixel(col, row);
-                    Color newPixel = this.ContrastMask(pixel, threshold);
-                    _image.SetPixel(col, row, newPixel);
+                    RawBitmap.Pixel pixel = _rawBitmap.GetPixel(row, col);
+                    RawBitmap.Pixel newPixel = ContrastMask(pixel, threshold);
+                    _rawBitmap.SetPixel(row, col, newPixel);
                 }
             }
+
+            _rawBitmap.CloseAndReturn();
             timer.Stop();
             Console.WriteLine($"Contrast mask done in {timer.ElapsedMilliseconds}ms");
         }
         
-        private Color ContrastMask(Color pixel, float threshold)
+        private RawBitmap.Pixel ContrastMask(RawBitmap.Pixel pixel, float threshold)
         {
-            float brightness = pixel.GetBrightness();
+            float brightness = pixel.Brightness;
             if (brightness > threshold)
             {
-                return Color.White;
+                return RawBitmap.Pixel.White();
             }
             else
             {
-                return Color.Black;
+                return RawBitmap.Pixel.Black();
             }
         }
 
