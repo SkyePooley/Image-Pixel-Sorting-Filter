@@ -82,31 +82,6 @@ namespace ImageManipulationSystemDrawing
         }
 
         /// <summary>
-        /// Sorts all pixels in all rows of the image by their brightness.
-        /// </summary>
-        public void SortAll()
-        {
-            for (int row = 0; row < _image.Height; row++)
-            {
-                SortRow(_image, row);
-            }
-        }
-
-        private void SortRow(Bitmap image, int rowIndex)
-        {
-            List<Color> rowPixels = new List<Color>(image.Width);
-            for (int col = 0; col < _image.Width; col++)
-            {
-                rowPixels.Add(_image.GetPixel(col, rowIndex));
-            }
-            rowPixels.Sort((x, y) => x.GetBrightness().CompareTo(y.GetBrightness()));
-            for (int col = 0; col < _image.Width; col++)
-            {
-                image.SetPixel(col, rowIndex, rowPixels[col]);
-            }
-        }
-
-        /// <summary>
         /// An image filter which sorts rows of pixels meeting the given brightness threshold.
         /// </summary>
         /// <param name="threshold">Brightness threshold for pixel to be included in sorted span. Range 0.0 -> 1.0 where 1.0 is white.</param>
@@ -159,6 +134,31 @@ namespace ImageManipulationSystemDrawing
             _image = spanSorter.LocalImage;
             timer.Stop();
             Console.WriteLine($"Sort complete in {timer.ElapsedMilliseconds}ms");
+        }
+        
+        /// <summary>
+        /// Sorts all pixels in all rows of the image by their brightness.
+        /// </summary>
+        public void SortAll()
+        {
+            for (int row = 0; row < _image.Height; row++)
+            {
+                SortRow(_image, row);
+            }
+        }
+
+        private void SortRow(Bitmap image, int rowIndex)
+        {
+            List<Color> rowPixels = new List<Color>(image.Width);
+            for (int col = 0; col < _image.Width; col++)
+            {
+                rowPixels.Add(_image.GetPixel(col, rowIndex));
+            }
+            rowPixels.Sort((x, y) => x.GetBrightness().CompareTo(y.GetBrightness()));
+            for (int col = 0; col < _image.Width; col++)
+            {
+                image.SetPixel(col, rowIndex, rowPixels[col]);
+            }
         }
     }
 }

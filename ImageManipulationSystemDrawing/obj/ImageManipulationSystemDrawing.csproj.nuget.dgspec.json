@@ -1,17 +1,17 @@
 {
   "format": 1,
   "restore": {
-    "C:\\Users\\wmpoo\\OneDrive\\Programs\\ImageManipulationSystemDrawing\\ImageManipulationSystemDrawing\\ImageManipulationSystemDrawing.csproj": {}
+    "C:\\Users\\wmpoo\\Sync\\Programs\\ImageManipulationSystemDrawing\\ImageManipulationSystemDrawing\\ImageManipulationSystemDrawing.csproj": {}
   },
   "projects": {
-    "C:\\Users\\wmpoo\\OneDrive\\Programs\\ImageManipulationSystemDrawing\\ImageManipulationSystemDrawing\\ImageManipulationSystemDrawing.csproj": {
+    "C:\\Users\\wmpoo\\Sync\\Programs\\ImageManipulationSystemDrawing\\ImageManipulationSystemDrawing\\ImageManipulationSystemDrawing.csproj": {
       "version": "1.0.0",
       "restore": {
-        "projectUniqueName": "C:\\Users\\wmpoo\\OneDrive\\Programs\\ImageManipulationSystemDrawing\\ImageManipulationSystemDrawing\\ImageManipulationSystemDrawing.csproj",
+        "projectUniqueName": "C:\\Users\\wmpoo\\Sync\\Programs\\ImageManipulationSystemDrawing\\ImageManipulationSystemDrawing\\ImageManipulationSystemDrawing.csproj",
         "projectName": "ImageManipulationSystemDrawing",
-        "projectPath": "C:\\Users\\wmpoo\\OneDrive\\Programs\\ImageManipulationSystemDrawing\\ImageManipulationSystemDrawing\\ImageManipulationSystemDrawing.csproj",
+        "projectPath": "C:\\Users\\wmpoo\\Sync\\Programs\\ImageManipulationSystemDrawing\\ImageManipulationSystemDrawing\\ImageManipulationSystemDrawing.csproj",
         "packagesPath": "C:\\Users\\wmpoo\\.nuget\\packages\\",
-        "outputPath": "C:\\Users\\wmpoo\\OneDrive\\Programs\\ImageManipulationSystemDrawing\\ImageManipulationSystemDrawing\\obj\\",
+        "outputPath": "C:\\Users\\wmpoo\\Sync\\Programs\\ImageManipulationSystemDrawing\\ImageManipulationSystemDrawing\\obj\\",
         "projectStyle": "PackageReference",
         "configFilePaths": [
           "C:\\Users\\wmpoo\\AppData\\Roaming\\NuGet\\NuGet.Config",
