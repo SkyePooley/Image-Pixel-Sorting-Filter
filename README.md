@@ -1,7 +1,7 @@
 # Pixel Sorting Image Filter
 Sorts pixels in photos for artistic effect.
 
-![Image of result from filter](https://github.com/SkyePooley/Image-Pixel-Sorting-Filter/blob/main/ImageManipulationSystemDrawing/Saved%20Results/readMe example.png?raw=true)  
+![Image of result from filter](https://github.com/SkyePooley/Image-Pixel-Sorting-Filter/blob/main/ImageManipulationSystemDrawing/Saved%20Results/readMe%20example.png?raw=true)  
 *Result from the filter using hue sorting and a 60% brightness threshold.*
 
 This program generates a contrast mask from the given image where pixels meeting a specified brightness threshold are white and all others are black.
