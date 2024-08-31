@@ -96,11 +96,20 @@ namespace ImageManipulationSystemDrawing
 
             Stopwatch timer = Stopwatch.StartNew();
             
-            // Create a thread to sort spans as they are created.
+            // Create queues to store new and completed tasks for threads
             ConcurrentQueue<SortingTask> spansToSort = new ConcurrentQueue<SortingTask>();
-            SpanSorter spanSorter = new SpanSorter(_image, spansToSort);
-            Thread spanSorterThread = new Thread(spanSorter.SortSpans);
-            spanSorterThread.Start();
+            ConcurrentQueue<SortingTask> completedSpans = new ConcurrentQueue<SortingTask>();
+
+            // Threads to sort spans
+            SorterGroup sorterGroup = new SorterGroup(spansToSort, completedSpans, 4);
+
+            // Thread to place sorted spans back into the image
+            Assembler imageAssembler = new Assembler(completedSpans, _image);
+            Thread imageAssemblerThread = new Thread(imageAssembler.AssembleImage);
+            
+            // Start threads
+            sorterGroup.start();
+            imageAssemblerThread.Start();
 
             // Search the image for contiguous lines of pixels whose corresponding contrast mask pixel is white
             int y = 0;
@@ -109,7 +118,7 @@ namespace ImageManipulationSystemDrawing
                 int x = 0;
                 while (x < _image.Width)
                 {
-                    if (contrastMask.GetPixel(x, y).GetBrightness().Equals(1))
+                    if (contrastMask.GetPixel(x, y).R == 255)
                     {
                         Span newSpan = new Span((x, y), _image.GetPixel(x, y));
                         x++;
@@ -126,12 +135,17 @@ namespace ImageManipulationSystemDrawing
                 }
                 y++;
             }
-            Console.WriteLine("Done finding spans");
+            Console.WriteLine($"Done finding spans {timer.ElapsedMilliseconds}");
             
             // Wait until the span sorter has finished, then terminate it.
             while (!spansToSort.IsEmpty) ;
-            spanSorter.cancel = true;
-            _image = spanSorter.LocalImage;
+            sorterGroup.stop();
+            Console.WriteLine($"sort done {timer.ElapsedMilliseconds}ms");
+            
+            while (!completedSpans.IsEmpty) ;
+            imageAssembler.cancel = true;
+            _image = imageAssembler.LocalImage;
+            Console.WriteLine($"assembly done {timer.ElapsedMilliseconds}ms");
             timer.Stop();
             Console.WriteLine($"Sort complete in {timer.ElapsedMilliseconds}ms");
         }

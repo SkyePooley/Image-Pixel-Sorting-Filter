@@ -5,14 +5,15 @@ namespace ImageManipulationSystemDrawing;
 
 public class SpanSorter
 {
-    public Bitmap LocalImage { get; }
     private ConcurrentQueue<SortingTask> spansToSort;
-    public volatile bool cancel;
+    private ConcurrentQueue<SortingTask> completedSpans;
+    private volatile bool cancel;
 
-    public SpanSorter(Bitmap image, ConcurrentQueue<SortingTask> spansToSort)
+    public SpanSorter(ConcurrentQueue<SortingTask> spansToSort, ConcurrentQueue<SortingTask> completedSpans, bool cancelToken)
     {
-        LocalImage = (Bitmap)image.Clone();
         this.spansToSort = spansToSort;
+        this.completedSpans = completedSpans;
+        this.cancel = cancelToken;
     }
     
     public void SortSpans()
@@ -30,12 +31,7 @@ public class SpanSorter
             }
                 
             //Place sorted pixels back into the image
-            (int x, int y) position = task.Span.StartPosition;
-            foreach (Color pixel in task.Span.Pixels)
-            {
-                LocalImage.SetPixel(position.x, position.y, pixel);
-                position.x++;
-            }
+            completedSpans.Enqueue(task);
         }
     }
 }
