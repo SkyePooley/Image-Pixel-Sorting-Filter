@@ -3,6 +3,8 @@ using System.Collections.Concurrent;
 using System.Collections.Generic;
 using System.Diagnostics;
 using System.Drawing;
+using System.Runtime.Serialization;
+using System.Runtime.Serialization.Formatters.Binary;
 using System.Threading.Tasks;
 
 
@@ -10,6 +12,7 @@ namespace ImageManipulationSystemDrawing
 {
     public class ImageProcessor
     {
+        private string imagePath;
         private Bitmap _image;
         private RawBitmap _rawBitmap;
         public enum SortingKey {
@@ -24,6 +27,7 @@ namespace ImageManipulationSystemDrawing
         /// <param name="path">Path to the image on file.</param>
         public ImageProcessor(string path)
         {
+            imagePath = path;
             _image = new Bitmap(path);
             _rawBitmap = new RawBitmap(_image);
             Console.WriteLine("Width: " + _image.Width);
@@ -34,12 +38,15 @@ namespace ImageManipulationSystemDrawing
         /// Construct an image processor using an existing Bitmap object.
         /// </summary>
         /// <param name="image">System.Drawing.Bitmap object containing a preloaded image.</param>
-        public ImageProcessor(Bitmap image)
+        private ImageProcessor(Bitmap image)
         {
-            _image = (Bitmap) image.Clone();
+            _image = (Bitmap) image.Clone(new Rectangle(0, 0, image.Width, image.Height), image.PixelFormat);
+            // _image = Clone<Bitmap>(image);
             _rawBitmap = new RawBitmap(_image);
         }
 
+
+        
         /// <summary>
         /// Saves the current state of the contained bitmap to disk.
         /// </summary>
@@ -68,14 +75,14 @@ namespace ImageManipulationSystemDrawing
                 }
             }
 
-            _rawBitmap.CloseAndReturn();
+            _image = _rawBitmap.CloseAndReturn();
             timer.Stop();
             Console.WriteLine($"Contrast mask done in {timer.ElapsedMilliseconds}ms");
         }
         
         private RawBitmap.Pixel ContrastMask(RawBitmap.Pixel pixel, float threshold)
         {
-            float brightness = pixel.Brightness;
+            float brightness = pixel.Luminance;
             if (brightness > threshold)
             {
                 return RawBitmap.Pixel.White();
@@ -95,9 +102,11 @@ namespace ImageManipulationSystemDrawing
         {
             Console.WriteLine("Creating Contrast Mask");
             // Generate a contrast mask of the image for span generation.
-            ImageProcessor subProcessor = new ImageProcessor(this._image);
+            ImageProcessor subProcessor = new ImageProcessor(_image);
             subProcessor.ContrastMask(threshold);
-            Bitmap contrastMask = subProcessor._image;
+
+            RawBitmap rawContrastMask = new RawBitmap(subProcessor._image);
+            RawBitmap rawImage = new RawBitmap(_image);
 
             Stopwatch timer = Stopwatch.StartNew();
             
@@ -106,7 +115,7 @@ namespace ImageManipulationSystemDrawing
             ConcurrentQueue<SortingTask> completedSpans = new ConcurrentQueue<SortingTask>();
 
             // Threads to sort spans
-            SorterGroup sorterGroup = new SorterGroup(spansToSort, completedSpans, 4);
+            SorterGroup sorterGroup = new SorterGroup(spansToSort, completedSpans, 1);
 
             // Thread to place sorted spans back into the image
             Assembler imageAssembler = new Assembler(completedSpans, _image);
@@ -117,29 +126,31 @@ namespace ImageManipulationSystemDrawing
             imageAssemblerThread.Start();
 
             // Search the image for contiguous lines of pixels whose corresponding contrast mask pixel is white
-            int y = 0;
-            while (y < _image.Height)
+            int row = 0;
+            while (row < _image.Height)
             {
-                int x = 0;
-                while (x < _image.Width)
+                int col = 0;
+                while (col < _image.Width)
                 {
-                    if (contrastMask.GetPixel(x, y).R == 255)
+                    if ((int)rawContrastMask.GetPixel(row, col).Luminance == 1)
                     {
-                        Span newSpan = new Span((x, y), _image.GetPixel(x, y));
-                        x++;
+                        Span newSpan = new Span((col, row), _rawBitmap.GetPixel(row, col));
+                        col++;
                         // Move along the row until the end of the span is found
-                        while (x < _image.Width && contrastMask.GetPixel(x, y).GetBrightness() != 0)
+                        while (col < _image.Width && rawContrastMask.GetPixel(row, col).Luminance != 0.0f)
                         {
-                            newSpan.AddPixel(_image.GetPixel(x, y));
-                            x++;
+                            newSpan.AddPixel(_rawBitmap.GetPixel(row, col));
+                            col++;
                         }
                         // Send the span to be sorted
                         spansToSort.Enqueue(new SortingTask(newSpan, sortBy));
                     }
-                    x++;
+                    col++;
                 }
-                y++;
+                row++;
             }
+
+            rawContrastMask.CloseAndReturn();
             Console.WriteLine($"Done finding spans {timer.ElapsedMilliseconds}");
             
             // Wait until the span sorter has finished, then terminate it.

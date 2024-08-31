@@ -5,13 +5,16 @@ namespace ImageManipulationSystemDrawing;
 
 public class Assembler
 {
-    public Bitmap LocalImage { get; }
+    private RawBitmap _rawImage;
+
+    public Bitmap LocalImage => _rawImage.CloseAndReturn();
+
     private ConcurrentQueue<SortingTask> sortedSpans;
     public volatile bool cancel;
 
     public Assembler(ConcurrentQueue<SortingTask> sortedSpans, Bitmap image)
     {
-        LocalImage = (Bitmap)image.Clone();
+        _rawImage = new RawBitmap(image);
         this.sortedSpans = sortedSpans;
     }
 
@@ -23,9 +26,9 @@ public class Assembler
             if (!sortedSpans.TryDequeue(out SortingTask? task)) continue;
             
             (int x, int y) position = task.Span.StartPosition;
-            foreach (Color pixel in task.Span.Pixels)
+            foreach (RawBitmap.Pixel pixel in task.Span.Pixels)
             {
-                LocalImage.SetPixel(position.x, position.y, pixel);
+                _rawImage.SetPixel(position.y, position.x, pixel);
                 position.x++;
             }
         }

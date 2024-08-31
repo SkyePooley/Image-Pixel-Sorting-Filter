@@ -9,9 +9,9 @@ namespace ImageManipulationSystemDrawing
         {
             try
             {
-                var imageProcessor = new ImageProcessor(@"C:\Users\wmpoo\Sync\Programs\ImageManipulationSystemDrawing\ImageManipulationSystemDrawing\Properties\demoSmall.png");
-                imageProcessor.ContrastMask(0.6f);
-                // imageProcessor.ContrastSort(0.6f, ImageProcessor.SortingKey.Hue);
+                var imageProcessor = new ImageProcessor(@"C:\Users\wmpoo\Sync\Programs\ImageManipulationSystemDrawing\ImageManipulationSystemDrawing\Properties\demoLarge.png");
+                // imageProcessor.ContrastMask(0.6f);
+                imageProcessor.ContrastSort(0.6f, ImageProcessor.SortingKey.Hue);
                 imageProcessor.SaveTo(@"C:\Users\wmpoo\Sync\Programs\ImageManipulationSystemDrawing\ImageManipulationSystemDrawing\output.png");
             }
             catch (Exception ex)
