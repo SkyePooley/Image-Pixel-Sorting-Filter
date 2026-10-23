@@ -1,3 +1,7 @@
+
+> [!IMPORTANT]
+> This repo is deprecated and has been replaced by [https://codeberg.org/oversky/improc](https://codeberg.org/oversky/improc) which resolves long-standing issues and improves performance.
+
 # Pixel Sorting Image Filter
 Sorts pixels in photos for artistic effect.
 
@@ -10,4 +14,4 @@ The result is saved into the root of the project as output.png
 
 ### Current Issues
 - No cross platform support, System.Drawing used for bitmap editing is Windows only.
-- No user interface. Connfiguration must be made from the program main method.
+- No user interface. Configuration must be made from the program main method.
